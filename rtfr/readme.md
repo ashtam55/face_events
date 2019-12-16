@@ -1,5 +1,5 @@
 # Face Events
-## Activate the pyenv located in bin/activate to start working right away.
+## Activate the pyvenv located in bin/activate to start working right away.
 ### For Detection 
 To search a face into AWS Rekogniton collection using aws cli.
 Run test_new.py
