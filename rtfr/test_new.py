@@ -3,7 +3,10 @@ import cv2
 import pickle
 import boto3
 import uuid
+import paho.mqtt.client as mqtt
 
+
+DETECT_TOPIC = "faceEvent/detected/faceID/"
 BUCKET = "face-event"  # This is the bucket where the face your trying to match lives
 COLLECTION = "faces"
 SOURCE_FILENAME = 'face.jpg'
@@ -21,6 +24,14 @@ threshold = 70
 maxFaces = 1
 client = boto3.client('rekognition', 'us-east-1')
 print('client init done')
+
+def on_publish(mqtt_client, userdata, mid):
+    print("mid: "+str(mid))
+
+mqtt_client = mqtt.Client()
+mqtt_client.on_publish = on_publish
+mqtt_client.connect("api.akriya.co.in", 1883)
+mqtt_client.loop_start()
 
 def upload_to_aws(local_file, bucket, s3_file):
 	s3 = boto3.client('s3')
@@ -73,11 +84,18 @@ def detect(src):
                                             FaceMatchThreshold=threshold,
                                             MaxFaces=maxFaces)
         faceMatches = response['FaceMatches']
-        print('Matching faces ', faceMatches)
+        # print('Matching faces ', faceMatches)
         if len(faceMatches) < 1 :
             print('Empty found')
         else :
             print ('Match Found')
+            for match in faceMatches:
+                print('FaceId:' + match['Face']['FaceId'])
+                print('Similarity: ' + "{:.2f}".format(match['Similarity']) + "%")
+                faceID = match['Face']['ExternalImageId'] 
+                print('imageId:' + faceID)
+
+            mqtt_client.publish(DETECT_TOPIC,str(faceID), qos=0)
             return True
     return False
 
@@ -127,7 +145,4 @@ while(True):
         
 # When everything done, release the capture
 cap.release()
-print('Attempting to save ashtam')
-# add_faces_to_collection(BUCKET, KEY, COLLECTION)
-print('added image index I guess')
 cv2.destroyAllWindows()

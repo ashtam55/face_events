@@ -5,7 +5,6 @@ import boto3
 import uuid
 import paho.mqtt.client as mqtt
 
-REGISTER_TOPIC = "faceEvent/registered/faceID/"
 BUCKET = "face-event"  # This is the bucket where the face your trying to match lives
 COLLECTION = "faces"
 SOURCE_FILENAME = 'face.jpg'
@@ -13,7 +12,6 @@ face_cascade = cv2.CascadeClassifier(
 	'cascades/data/haarcascade_frontalface_alt2.xml')
 eye_cascade = cv2.CascadeClassifier('cascades/data/haarcascade_eye.xml')
 smile_cascade = cv2.CascadeClassifier('cascades/data/haarcascade_smile.xml')
-
 
 
 recognizer = cv2.face.LBPHFaceRecognizer_create()
@@ -30,13 +28,29 @@ maxFaces = 1
 client = boto3.client('rekognition', 'us-east-1')
 print('client init done')
 
-def on_publish(mqtt_client, userdata, mid):
-    print("mid: "+str(mid))
 
-mqtt_client = mqtt.Client()
-mqtt_client.on_publish = on_publish
-mqtt_client.connect("api.akriya.co.in", 1883)
-mqtt_client.loop_start()
+# The callback for when the client receives a CONNACK response from the server.
+def on_connect(client, userdata, flags, rc):
+    print("Connected with result code "+str(rc))
+
+    # Subscribing in on_connect() means that if we lose the connection and
+    # reconnect then subscriptions will be renewed.
+    client.subscribe("faceEvents/camera/101101/#")
+
+# The callback for when a PUBLISH message is received from the server.
+
+
+def on_message(client, userdata, msg):
+    print(msg.topic+" "+str(msg.payload))
+
+
+client = mqtt.Client()
+client.on_connect = on_connect
+client.on_message = on_message
+
+client.connect("api.akriya.co.in", 1883, 60)
+
+client.loop_start()
 
 def upload_to_aws(local_file, bucket, s3_file):
 	s3 = boto3.client('s3')
@@ -97,7 +111,6 @@ def detect(src):
             return True
     return False
 
-
 def register(src):
     if detect(src):
         print('bhap')
@@ -107,8 +120,8 @@ def register(src):
         KEY = id.hex + ".jpg"
         uploaded = upload_to_aws(src, BUCKET,KEY)
         add_faces_to_collection(BUCKET, KEY, COLLECTION)
-        mqtt_client.publish(REGISTER_TOPIC,str(KEY), qos=0)   
-        print('added image index')
+        print('added image index I guess')
+
 
 while(True):
     ret, frame = cap.read()  # we got image
@@ -121,14 +134,17 @@ while(True):
             roi_color = frame[y:y+h, x:x+w]
             img_item = "face.jpg"
             cv2.imwrite(img_item, roi_color)
-            register(img_item)
+            # register(img_item)
     cv2.imshow('frame', frame)
+    # detect()
+    # register()
 
+    
     if cv2.waitKey(20) & 0xFF == ord('q'):
         break 
         # collectionId='faces'
         # faces=[]
-        # faces.append("9f64b54e-5eb9-4ad7-997a-9e35b6ce83a8")
+        # faces.append("2983f2a1-0e61-423b-9bc3-00781bfc7795")
 
         # client=boto3.client('rekognition','us-east-1')
 
@@ -138,7 +154,9 @@ while(True):
         # print(str(len(response['DeletedFaces'])) + ' faces deleted:') 							
         # for faceId in response['DeletedFaces']:
         #     print (faceId)  
-        
+
+# client.loop_forever()
+
 # When everything done, release the capture
 cap.release()
 cv2.destroyAllWindows()
