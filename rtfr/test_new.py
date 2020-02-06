@@ -5,7 +5,10 @@ import boto3
 import uuid
 import paho.mqtt.client as mqtt
 
-
+FAILED_TOPIC = "faceEvents/camera/101101/fail"
+FAILED_PAYLOAD = "failed"
+SUCCESS_TOPIC = "faceEvents/camera/101101/succes"
+SUCCESS_PAYLOAD = "success"
 DETECT_TOPIC = "faceEvent/detected/faceID/"
 BUCKET = "face-event"  # This is the bucket where the face your trying to match lives
 COLLECTION = "faces"
@@ -87,6 +90,7 @@ def detect(src):
         # print('Matching faces ', faceMatches)
         if len(faceMatches) < 1 :
             print('Empty found')
+            mqtt_client.publish(FAILED_TOPIC,FAILED_PAYLOAD,qos=0)
         else :
             print ('Match Found')
             for match in faceMatches:
@@ -94,7 +98,7 @@ def detect(src):
                 print('Similarity: ' + "{:.2f}".format(match['Similarity']) + "%")
                 faceID = match['Face']['ExternalImageId'] 
                 print('imageId:' + faceID)
-
+            mqtt_client.publish(SUCCESS_TOPIC,str(faceID),qos=0)
             mqtt_client.publish(DETECT_TOPIC,str(faceID), qos=0)
             return True
     return False
