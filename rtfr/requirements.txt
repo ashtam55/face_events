@@ -128,7 +128,7 @@ pyobjc-framework-WebKit==6.1
 python-dateutil==2.8.0
 pyttsx==1.1
 pyttsx3==2.71
-PyYAML==5.1.2
+PyYAML==5.4
 requests==2.22.0
 rsa==3.4.2
 s3transfer==0.2.1
