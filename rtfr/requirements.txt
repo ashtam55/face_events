@@ -134,7 +134,7 @@ rsa==3.4.2
 s3transfer==0.2.1
 six==1.13.0
 traitlets==4.3.3
-urllib3==1.25.7
+urllib3==1.26.5
 uuid==1.30
 wcwidth==0.1.7
 Werkzeug==0.16.0
