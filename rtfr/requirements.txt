@@ -26,7 +26,7 @@ paho-mqtt==1.5.0
 parso==0.5.2
 pexpect==4.7.0
 pickleshare==0.7.5
-Pillow==6.2.1
+Pillow==8.3.2
 prompt-toolkit==3.0.2
 ptyprocess==0.6.0
 pyasn1==0.4.8
